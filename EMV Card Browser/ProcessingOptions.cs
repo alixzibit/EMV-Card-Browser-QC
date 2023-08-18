@@ -18,9 +18,11 @@ namespace EMV_Card_Browser
         }
         public List<APDUResponse> ReadRecords { get; private set; } = new List<APDUResponse>();
 
+
         public APDUResponse GetProcessingOptions()
         {
             string logPath = @"C:\EMV_CB_log\emvcard_log.txt";
+
             void LogToFile(string message)
             {
                 using (StreamWriter writer = new StreamWriter(logPath, true))
@@ -28,63 +30,32 @@ namespace EMV_Card_Browser
                     writer.WriteLine($"{DateTime.Now:G}: {message}");
                 }
             }
-            byte[] commandData = new byte[] { 0x83, 0x00 };  // Empty PDOL
+
+            byte[] commandData = new byte[] { 0x83, 0x00 };
             LogToFile("Preparing APDU command with Empty PDOL.");
 
-            // Build the APDU command for GPO
-            APDUCommand apdu = new APDUCommand(0x80, 0xA8, 0x00, 0x00, commandData, 0x00);
+            APDUCommand apdu = new APDUCommand(0x80, 0xA8, 0x00, 0x00, commandData, 0x02);
             LogToFile($"APDU Command prepared: {BitConverter.ToString(apdu.CommandData)}.");
 
             APDUResponse response = _cardReader.Transmit(apdu);
             LogToFile($"Received APDU Response with SW1 = {response.SW1}, SW2 = {response.SW2}.");
 
-            // Create a container for the entire response data
-            List<byte> fullData = new List<byte>();
-
-            // If response data is available, append it to fullData
-            if (response.Data != null)
-            {
-                fullData.AddRange(response.Data);
-                LogToFile("Added received data to fullData container.");
-            }
-
-            // Retry with correct length if status word is 0x6C
-            if (response.SW1 == 0x6C)
-            {
-                LogToFile("Response indicates wrong length. Retrying with correct length...");
-                apdu = new APDUCommand(0x80, 0xA8, 0x00, 0x00, commandData, response.SW2);
-                response = _cardReader.Transmit(apdu);
-                fullData.Clear();
-                fullData.AddRange(response.Data);
-                LogToFile($"Retried APDU Command and updated fullData with new data: {BitConverter.ToString(fullData.ToArray())}.");
-            }
-
-            // Keep fetching more data while status indicates more data
-            while (response.SW1 == 0x61)
+            if (response.SW1 == 0x61)
             {
                 LogToFile("Status indicates more data is available. Fetching...");
                 apdu = new APDUCommand(0x00, 0xC0, 0x00, 0x00, null, response.SW2);
                 response = _cardReader.Transmit(apdu);
-                // Append response data to fullData
-                if (response.Data != null)
-                {
-                    fullData.AddRange(response.Data);
-                    LogToFile($"Appended new data to fullData: {BitConverter.ToString(fullData.ToArray())}.");
-                }
-                else
-                {
-                    LogToFile("No additional data received to append to fullData.");
-                }
             }
 
-            // If needed, replace the original response data with the combined fullData
-            // Assuming fullData contains: 80-0A-7C-00-18-01-06-01-08-01-01-00
-            if (fullData.Count > 0)
-            {
-                LogToFile($"Appended new data to fullData: {BitConverter.ToString(fullData.ToArray())}");
+            List<byte> fullData = new List<byte>(response.Data);
 
-                byte[] aip = fullData.Skip(2).Take(2).ToArray(); // Skip the template and length, then take AIP
-                byte[] aflData = fullData.Skip(4).ToArray();     // Skip template, length, and AIP to get AFL data
+            // Checking for Template Format
+            if (fullData[0] == 0x80) // Template Format 1
+            {
+                LogToFile("Detected Template Format 1.");
+
+                byte[] aip = fullData.Skip(2).Take(2).ToArray();
+                byte[] aflData = fullData.Skip(4).ToArray();
 
                 LogToFile($"AIP: {BitConverter.ToString(aip)}");
                 LogToFile($"AFL Data: {BitConverter.ToString(aflData)}");
@@ -99,13 +70,25 @@ namespace EMV_Card_Browser
                         LogToFile($"Added AFL Entry: {BitConverter.ToString(aflEntry)}");
                     }
                 }
+            }
+            else if (fullData[0] == 0x77) // Template Format 2
+            {
+                LogToFile("Detected Template Format 2.");
 
-                foreach (var locator in afls)
+                byte[] aip = fullData.Skip(3).Take(2).ToArray(); // Find the AIP (0x82 tag)
+                byte[] aflData = fullData.Skip(7).ToArray();     // Skip the 0x94 tag and its length
+
+                LogToFile($"AIP: {BitConverter.ToString(aip)}");
+                LogToFile($"AFL Data: {BitConverter.ToString(aflData)}");
+
+                List<ApplicationFileLocator> afls = new List<ApplicationFileLocator>();
+                for (int i = 0; i < aflData.Length; i += 4)
                 {
-                    for (byte recordNum = locator.FirstRecord; recordNum <= locator.LastRecord; recordNum++)
+                    if (i + 4 <= aflData.Length)
                     {
-                        var recordResponse = _recordReader.ReadRecord(locator.SFI, recordNum);
-                        ReadRecords.Add(recordResponse); // Now process the recordResponse as needed
+                        byte[] aflEntry = aflData.Skip(i).Take(4).ToArray();
+                        afls.Add(new ApplicationFileLocator(aflEntry));
+                        LogToFile($"Added AFL Entry: {BitConverter.ToString(aflEntry)}");
                     }
                 }
             }

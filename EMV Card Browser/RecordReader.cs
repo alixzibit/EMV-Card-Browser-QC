@@ -28,9 +28,9 @@ namespace EMV_Card_Browser
         {
             List<APDUResponse> responses = new List<APDUResponse>();
 
-            for (byte sfi = 1; sfi <= 10; sfi++)
+            for (byte sfi = 1; sfi <= 5; sfi++)
             {
-                for (byte record = 1; record <= 16; record++)
+                for (byte record = 1; record <= 7; record++)
                 {
                     APDUResponse response = ReadRecord(sfi, record);
 

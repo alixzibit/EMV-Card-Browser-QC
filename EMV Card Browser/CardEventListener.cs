@@ -5,6 +5,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
 using System;
+using System.Windows.Input;
 
 namespace EMV_Card_Browser
 {
@@ -51,6 +52,7 @@ namespace EMV_Card_Browser
 
         private CardRecord tempRecord = new CardRecord();
         private void PcscReader_CardInserted(string reader, byte[] atr)
+
         {
             _statusLabel.Dispatcher.Invoke(() =>
             {
@@ -69,7 +71,7 @@ namespace EMV_Card_Browser
                     {
                         _statusLabel.Content = $"Card reading attempt {attempt} in progress...";
                     });
-
+                    
                     _readCardAction();
 
                     _statusLabel.Dispatcher.Invoke(() =>
@@ -83,9 +85,9 @@ namespace EMV_Card_Browser
                         tempRecord = new CardRecord();
 
                     });
-
                     isReadSuccessful = true;
                     break; // Exit the loop if reading is successful.
+
                 }
                 catch
                 {

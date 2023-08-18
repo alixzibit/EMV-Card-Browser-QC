@@ -26,6 +26,7 @@ using System.Windows.Controls;
 using System.Windows.Markup;
 using System.Windows.Media.Imaging;
 using System.Security.Principal;
+using System.Windows.Input;
 
 
 namespace EMV_Card_Browser
@@ -45,6 +46,7 @@ namespace EMV_Card_Browser
             InitializeComponent();
             DataContext = viewModel;
             viewModel.PropertyChanged += ViewModel_PropertyChanged;
+            Encoding.RegisterProvider(CodePagesEncodingProvider.Instance);
 
             // Initialize rootNode
             rootNode = new Asn1NodeViewModel("Root");
@@ -58,7 +60,7 @@ namespace EMV_Card_Browser
             // Now, you just have to subscribe to the event of the _cardEventListener
             _cardEventListener.CardReadFinished += CheckAndAddToDataGrid;
             string currentUsername = WindowsIdentity.GetCurrent().Name.Split('\\').Last();
-            usernameLabel.Content = "User: " + currentUsername;
+            usernameLabel.Content = "Windows User: " + currentUsername;
         }
 
 
@@ -119,7 +121,7 @@ namespace EMV_Card_Browser
                 CardType = cardType,
                 CardNumber = viewModel.PAN,
                 ExpiryDate = viewModel.Expiry,
-                Timestamp = DateTime.Now
+                Timestamp = Convert.ToDateTime(DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss"))
             };
 
             var existingRecord = viewModel.CardRecords.FirstOrDefault(record =>
@@ -267,18 +269,18 @@ namespace EMV_Card_Browser
 
         private void ReadCard()
         {
+          
             // Use Dispatcher to ensure UI operations are executed on the main thread
             Dispatcher.Invoke(() =>
             {
+                Mouse.OverrideCursor = Cursors.Wait;
                 var rootNodeCollection = (ObservableCollection<Asn1NodeViewModel>)CardDataTree.ItemsSource;
                 rootNodeCollection.Clear();
-
                 InitializeCardReader();
 
                 // If you are auto-selecting the reader in CardEventListener
                 string readerName = _cardEventListener.GetSelectedReaderName();
                 // assuming _selectedReaderName is the name of the selected reader, and is accessible.
-
                 if (string.IsNullOrEmpty(readerName))
                 {
                     MessageBox.Show("No reader selected.");
@@ -391,11 +393,9 @@ namespace EMV_Card_Browser
                         ASN1 asn1Response = new ASN1(record.Data);
                         AddRecordNodes(asn1Response, rootNode);
 
-
                     }
-
+                    Mouse.OverrideCursor = null;
                 }
-
 
                 catch (Exception ex)
                 {
@@ -560,7 +560,7 @@ namespace EMV_Card_Browser
                 if (existingRecord == null)
                 {
                     tempRecord.CardType = DeduceCardTypeFromPAN(tempRecord.CardNumber);
-                    tempRecord.Timestamp = DateTime.Now;
+                    tempRecord.Timestamp = Convert.ToDateTime(DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss"));
 
                     viewModel.CardRecords.Add(tempRecord);
                 }
@@ -696,9 +696,25 @@ namespace EMV_Card_Browser
 
         }
 
-        private void button_Click(object sender, RoutedEventArgs e)
+        private void GenerateReport_Click(object sender, RoutedEventArgs e)
         {
+            // Assuming you have a collection named CardRecords in your ViewModel
+            var generator = new ReportGenerator("Cards Chip QC Report", usernameLabel.Content.ToString(), viewModel.CardRecords);
 
+            string filename = generator.GenerateReport();
+
+            // Automatically open the generated PDF
+            //System.Diagnostics.Process.Start(filename);
+            string fullPath = System.IO.Path.Combine(Environment.CurrentDirectory, "CardsQCReport.pdf");
+            var psi = new ProcessStartInfo
+            {
+                FileName = fullPath,
+                UseShellExecute = true
+            };
+            Process.Start(psi);
+
+            //string fullPath = System.IO.Path.Combine(Environment.CurrentDirectory, "CardsQCReport.pdf");
+            //Process.Start(fullPath);
         }
     }
 }

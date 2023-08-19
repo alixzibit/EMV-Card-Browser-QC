@@ -44,7 +44,7 @@
         <Label x:Name="CardholderName" Content="" HorizontalAlignment="Center" Height="34" VerticalAlignment="Center" Width="336" FontSize="20"/>
         <Image x:Name="CardType" Height="66" Margin="22,84,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="103" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality">
             <Image.Effect>
-                <DropShadowEffect ShadowDepth="2" Direction="200" BlurRadius="2" Opacity="0.7" Color="Black"/>
+                <DropShadowEffect ShadowDepth="1" Direction="250" BlurRadius="2" Opacity="0.7" Color="Black"/>
             </Image.Effect>
         </Image>
         <Label x:Name="Expiry" Content="" HorizontalAlignment="Left" Height="34" Margin="174,145,0,0" VerticalAlignment="Top" Width="248" FontSize="20"/>

@@ -13,19 +13,20 @@ namespace EMV_Card_Browser
         {
             _cardReader = cardReader ?? throw new ArgumentNullException(nameof(cardReader));
         }
-        string logPath = @"C:\EMV_CB_log\emvcard_log.txt";
-        void LogToFile(string message)
-        {
-            using (StreamWriter writer = new StreamWriter(logPath, true))
-            {
-                writer.WriteLine($"{DateTime.Now:G}: {message}");
-            }
-        }
+        //string logPath = @"C:\EMV_CB_log\emvcard_log.txt";
+        //voidlogger.WriteLog(string message)
+        //{
+        //    using (StreamWriter writer = new StreamWriter(logPath, true))
+        //    {
+        //        writer.WriteLine($"{DateTime.Now:G}: {message}");
+        //    }
+        //}
         // For simplicity, this example assumes reading of record numbers from 1 to the maximum possible (SFI up to 30 and record up to 16).
         // You might want to adjust this based on the AID or other transaction specifics.
-
+        
         public List<APDUResponse> ReadAllRecords()
         {
+            var logger = new Logger();
             List<APDUResponse> responses = new List<APDUResponse>();
 
             for (byte sfi = 1; sfi <= 5; sfi++)
@@ -35,12 +36,12 @@ namespace EMV_Card_Browser
                     APDUResponse response = ReadRecord(sfi, record);
 
                     // Log the record attempt
-                    LogToFile($"Attempted to read record: SFI: {sfi}, Record: {record}, SW1: {response.SW1:X2}, SW2: {response.SW2:X2}");
+                   logger.WriteLog($"Attempted to read record: SFI: {sfi}, Record: {record}, SW1: {response.SW1:X2}, SW2: {response.SW2:X2}");
 
                     // Check if the response indicates "record not found" or "wrong parameters", then break the inner loop.
                     if (response.SW1 == 0x6A && response.SW2 == 0x82)
                     {
-                        LogToFile($"Record not found for SFI: {sfi}, Record: {record}. Breaking inner loop.");
+                       logger.WriteLog($"Record not found for SFI: {sfi}, Record: {record}. Breaking inner loop.");
                         break;
                     }
 
@@ -48,7 +49,7 @@ namespace EMV_Card_Browser
                     if (response.SW1 == 0x90 && response.SW2 == 0x00)
                     {
                         responses.Add(response);
-                        LogToFile($"Successfully read record for SFI: {sfi}, Record: {record}. Added to list.");
+                       logger.WriteLog($"Successfully read record for SFI: {sfi}, Record: {record}. Added to list.");
                     }
                 }
             }
@@ -58,6 +59,7 @@ namespace EMV_Card_Browser
 
         public APDUResponse ReadRecord(byte sfi, byte record)
         {
+            var logger = new Logger();
             byte p2 = (byte)((sfi << 3) | 4); // construct P2 value from SFI. It's commonly (SFI << 3) | 4
             APDUCommand apdu = new APDUCommand(0x00, 0xB2, record, p2, null, 0x00);
 
@@ -66,7 +68,7 @@ namespace EMV_Card_Browser
             // Check for 0x6C status word
             if (response.SW1 == 0x6C)
             {
-                LogToFile($"Received 0x6C status. Adjusting Le and reissuing command - 00 B2 {record} {p2} {response.SW2}.");
+               logger.WriteLog($"Received 0x6C status. Adjusting Le and reissuing command - 00 B2 {record} {p2} {response.SW2}.");
                 apdu = new APDUCommand(0x00, 0xB2, record, p2, null, response.SW2); // adjust Le with SW2
                 response = _cardReader.Transmit(apdu);
             }

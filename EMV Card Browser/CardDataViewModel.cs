@@ -1,4 +1,5 @@
-﻿using System;
+﻿using PCSC.Iso7816;
+using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
@@ -17,11 +18,14 @@ namespace EMV_Card_Browser
 
         public string CardholderName
         {
+
             get => cardholderName;
             set
             {
                 cardholderName = value;
                 OnPropertyChanged(nameof(CardholderName));
+                var logger = new Logger();
+                logger.WriteLog($"CardholderName {cardholderName}");
             }
         }
 
@@ -32,6 +36,8 @@ namespace EMV_Card_Browser
             {
                 cardType = value;
                 OnPropertyChanged(nameof(CardType));
+                var logger = new Logger();
+                logger.WriteLog($"CardType {CardType}");
             }
         }
 
@@ -42,6 +48,8 @@ namespace EMV_Card_Browser
             {
                 pan = value;
                 OnPropertyChanged(nameof(PAN));
+                var logger = new Logger();
+                logger.WriteLog($"PAN {PAN}");
             }
         }
 
@@ -52,9 +60,12 @@ namespace EMV_Card_Browser
             {
                 expiry = value;
                 OnPropertyChanged(nameof(Expiry));
+                var logger = new Logger();
+                logger.WriteLog($"Expiry {Expiry}");
             }
         }
         public ObservableCollection<CardRecord> CardRecords { get; } = new ObservableCollection<CardRecord>();
+
         public event PropertyChangedEventHandler PropertyChanged;
 
         protected virtual void OnPropertyChanged(string propertyName)

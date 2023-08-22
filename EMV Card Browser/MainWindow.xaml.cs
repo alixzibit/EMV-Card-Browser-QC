@@ -34,6 +34,7 @@ namespace EMV_Card_Browser
 
     public partial class MainWindow : Window
     {
+
         private PCSCReader _cardReader;
         public ObservableCollection<Asn1NodeViewModel> _treeNodes = new ObservableCollection<Asn1NodeViewModel>();
         private Asn1NodeViewModel rootNode;
@@ -62,7 +63,6 @@ namespace EMV_Card_Browser
             string currentUsername = WindowsIdentity.GetCurrent().Name.Split('\\').Last();
             usernameLabel.Content = "Windows User: " + currentUsername;
         }
-
 
         //public MainWindow()
         //{
@@ -250,32 +250,27 @@ namespace EMV_Card_Browser
                 }
             }
         }
-        private void LogToFile(string message)
-        {
-            string logPath = @"C:\EMV_CB_log\emvcard_log.txt";
-            using (StreamWriter writer = new StreamWriter(logPath, true))
-            {
-                writer.WriteLine($"{DateTime.Now:G}: {message}");
-            }
-        }
 
         private bool ConnectToCard(string readerName)
         {
+            var logger = new Logger();
             bool success = _cardReader.Connect(readerName);
-            LogToFile(success ? "Successfully connected to card reader." : "Failed to connect to card reader.");
+           logger.WriteLog(success ? "Successfully connected to card reader." : "Failed to connect to card reader.");
             return success;
         }
 
 
-        private void ReadCard()
+        internal void ReadCard()
         {
           
             // Use Dispatcher to ensure UI operations are executed on the main thread
             Dispatcher.Invoke(() =>
             {
+                var logger = new Logger();
                 Mouse.OverrideCursor = Cursors.Wait;
                 var rootNodeCollection = (ObservableCollection<Asn1NodeViewModel>)CardDataTree.ItemsSource;
                 rootNodeCollection.Clear();
+
                 InitializeCardReader();
 
                 // If you are auto-selecting the reader in CardEventListener
@@ -295,11 +290,11 @@ namespace EMV_Card_Browser
                 try
                 {
                     byte[] pse = Encoding.ASCII.GetBytes("1PAY.SYS.DDF01");
-                    LogToFile($"Sending APDU command to select the PSE: {BitConverter.ToString(pse)}");
+                   logger.WriteLog($"Sending APDU command to select the PSE: {BitConverter.ToString(pse)}");
 
                     APDUCommand apdu = new APDUCommand(0x00, 0xA4, 0x04, 0x00, pse, (byte)pse.Length);
                     APDUResponse response = _cardReader.Transmit(apdu);
-                    LogToFile($"Received response: SW1 = {response.SW1}, SW2 = {response.SW2}");
+                   logger.WriteLog($"Received response: SW1 = {response.SW1}, SW2 = {response.SW2}");
                     // Check if the response is successful and contains ASN.1 data.
                     if (response.SW1 == 0x90 && response.Data != null && response.Data.Length > 0)
                     {
@@ -326,35 +321,35 @@ namespace EMV_Card_Browser
                         {
                             AddResponseNodes(response, rootNode);  // This will add nodes only if there's any non-status data.
                         }
-                        LogToFile($"Selected AID: {BitConverter.ToString(aidSelectionResult.AID)}");
+                        logger.WriteLog($"Selected AID: {BitConverter.ToString(aidSelectionResult.AID)}");
 
                         if (response == null)
                         {
-                            statusLabel.Content = "Failed to select a known AID";
-                            //MessageBox.Show("Failed to select a known AID.");
-                            //return;
+                            statusLabel.Content = "Card not personalized or Failed to select a known AID";
+                            MessageBox.Show("Card not personalized or Failed to select a known AID.");
+                            return;
                         }
 
-                        ApplicationSelection appSelection = new ApplicationSelection(_cardReader);
-                        response = appSelection.SelectApplication(aidSelectionResult.AID);
-                        // Check if the response is successful and contains ASN.1 data.
-                        if (response.SW1 == 0x90 && response.Data != null && response.Data.Length > 0)
-                        {
-                            ASN1 asn1Response = new ASN1(response.Data);
-                            AddRecordNodes(asn1Response, rootNode);
-                        }
-                        else
-                        {
-                            AddResponseNodes(response, rootNode);  // This will add nodes only if there's any non-status data.
-                        }
-                        LogToFile($"Application Selection response: SW1 = {response.SW1}, SW2 = {response.SW2}");
+                        //ApplicationSelection appSelection = new ApplicationSelection(_cardReader);
+                        //response = appSelection.SelectApplication(aidSelectionResult.AID);
+                        //// Check if the response is successful and contains ASN.1 data.
+                        //if (response.SW1 == 0x90 && response.Data != null && response.Data.Length > 0)
+                        //{
+                        //    ASN1 asn1Response = new ASN1(response.Data);
+                        //    AddRecordNodes(asn1Response, rootNode);
+                        //}
+                        //else
+                        //{
+                        //    AddResponseNodes(response, rootNode);  // This will add nodes only if there's any non-status data.
+                        //}
+                        //logger.WriteLog($"Application Selection response: SW1 = {response.SW1}, SW2 = {response.SW2}");
 
-                        if (!appSelection.IsSelectionSuccessful(response))
-                        {
-                            statusLabel.Content = "Failed to select the application by AID";
-                            //MessageBox.Show("Failed to select the application by AID.");
-                            //return;
-                        }
+                        //if (!appSelection.IsSelectionSuccessful(response))
+                        //{
+                        //    statusLabel.Content = "Failed to select the application by AID";
+                        //    //MessageBox.Show("Failed to select the application by AID.");
+                        //    //return;
+                        //}
                     }
 
                     ProcessingOptions processingOptions = new ProcessingOptions(_cardReader);
@@ -370,7 +365,7 @@ namespace EMV_Card_Browser
                     {
                         AddResponseNodes(response, rootNode);  // This will add nodes only if there's any non-status data.
                     }
-                    LogToFile($"Processing options response: SW1 = {response.SW1}, SW2 = {response.SW2}");
+                    logger.WriteLog($"Processing options response: SW1 = {response.SW1}, SW2 = {response.SW2}");
 
                     if (!processingOptions.IsGPOResponseSuccessful(response))
                     {
@@ -381,7 +376,7 @@ namespace EMV_Card_Browser
                     RecordReader recordReader = new RecordReader(_cardReader);
                     List<APDUResponse> records = recordReader.ReadAllRecords();
 
-                    LogToFile($"Number of records retrieved: {records.Count}");
+                   logger.WriteLog($"Number of records retrieved: {records.Count}");
 
                     if (records.Count == 0)
                     {
@@ -399,9 +394,21 @@ namespace EMV_Card_Browser
 
                 catch (Exception ex)
                 {
-                    LogToFile($"ERROR: {ex.Message}");
-                    MessageBox.Show($"An error occurred: {ex.Message}");
+                    logger.WriteLog($"CARD READ ERROR: {ex.Message}");
+
+                    // Prompt the user to retry
+                    MessageBoxResult result = MessageBox.Show("Card reading error occurred. Would you like to retry?", "Error", MessageBoxButton.YesNo, MessageBoxImage.Error);
+
+                    if (result == MessageBoxResult.Yes)
+                    {
+                        ReadCard();
+                    }
+                    else
+                    {
+                        statusLabel.Content = "Card reading error";
+                    }
                 }
+
             });
         }
 
@@ -547,6 +554,12 @@ namespace EMV_Card_Browser
         }
         private void CheckAndAddToDataGrid()
         {
+            var logger = new Logger();
+            logger.WriteLog($" Entering Card data grid method");
+            logger.WriteLog($"tempRecord.CardholderName is '{tempRecord.CardholderName}'");
+            logger.WriteLog($"tempRecord.CardNumber is '{tempRecord.CardNumber}'");
+            logger.WriteLog($"tempRecord.ExpiryDate is '{tempRecord.ExpiryDate}'");
+
             if (!string.IsNullOrWhiteSpace(tempRecord.CardholderName) &&
                 !string.IsNullOrWhiteSpace(tempRecord.CardNumber) &&
                 !string.IsNullOrWhiteSpace(tempRecord.ExpiryDate))
@@ -555,14 +568,22 @@ namespace EMV_Card_Browser
                     record.CardNumber == tempRecord.CardNumber &&
                     record.ExpiryDate == tempRecord.ExpiryDate &&
                     record.CardholderName == tempRecord.CardholderName
-                );
 
+                );
+                if (existingRecord != null)
+                {
+                    logger.WriteLog($"Found existing record: {existingRecord.CardNumber}, {existingRecord.ExpiryDate}, {existingRecord.CardholderName}");
+                }
                 if (existingRecord == null)
                 {
                     tempRecord.CardType = DeduceCardTypeFromPAN(tempRecord.CardNumber);
-                    tempRecord.Timestamp = Convert.ToDateTime(DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss"));
+                    //tempRecord.Timestamp = Convert.ToDateTime(DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss"));
+                    tempRecord.Timestamp = DateTime.Now;
+
 
                     viewModel.CardRecords.Add(tempRecord);
+                    logger = new Logger();
+                    logger.WriteLog($"Card data grid records: {tempRecord.CardNumber}, {tempRecord.ExpiryDate}, {tempRecord.CardholderName}, {tempRecord.Timestamp}");
                 }
             }
         }

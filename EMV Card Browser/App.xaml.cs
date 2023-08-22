@@ -13,5 +13,18 @@ namespace EMV_Card_Browser
     /// </summary>
     public partial class App : Application
     {
+        protected override void OnStartup(StartupEventArgs e)
+        {
+            base.OnStartup(e);
+
+            MainWindow mainWindow = new MainWindow();
+            mainWindow.Show();
+
+            // Check if readCardOnStart argument is present
+            if (e.Args.Contains("readCardOnStart"))
+            {
+                mainWindow.ReadCard();
+            }
+        }
     }
 }

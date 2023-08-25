@@ -5,8 +5,7 @@
         xmlns:av="http://schemas.microsoft.com/expression/blend/2008" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="av" x:Class="EMV_Card_Browser.MainWindow"
         Title="EMV Card Reader QC" Height="592" Width="698"
         ResizeMode="NoResize"
-        WindowStyle="SingleBorderWindow"
-        Icon="/emvcardico2.png">
+        WindowStyle="SingleBorderWindow">
     <Window.Background>
         <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
             <GradientStop Color="#FF7E99B3"/>
@@ -30,7 +29,22 @@
         <!-- DataGrid for card events -->
         <DataGrid x:Name="CardDataGrid" IsReadOnly="True"  ItemsSource="{Binding CardRecords}" AutoGenerateColumns="False" Margin="4,10,6,65" Grid.Row="1"
                    x:FieldModifier="public" BorderThickness="3,3,3,3">
+            <DataGrid.BorderBrush>
+                <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                    <GradientStop Color="#FF09283C"/>
+                    <GradientStop Color="#FF678DA5" Offset="1"/>
+                    <GradientStop Color="#FF517085" Offset="0.891"/>
+                </LinearGradientBrush>
+            </DataGrid.BorderBrush>
+            <DataGrid.Background>
+                <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                    <GradientStop Color="#FFC4D1DA"/>
+                    <GradientStop Color="#FF7C9CB1" Offset="1"/>
+                    <GradientStop Color="#FFA3C3D8" Offset="0.35"/>
+                </LinearGradientBrush>
+            </DataGrid.Background>
             <DataGrid.Columns>
+                <DataGridTextColumn Header="Sr no" Binding="{Binding Srno}" Width="38" />
                 <DataGridTextColumn Header="Card Type" Binding="{Binding CardType}" Width="75" />
                 <DataGridTextColumn Header="Cardholder Name" Binding="{Binding CardholderName}" Width="200" />
                 <DataGridTextColumn Header="Card Number" Binding="{Binding CardNumber}" Width="150" />
@@ -40,15 +54,27 @@
         </DataGrid>
 
         <!-- Other UI Elements -->
-        <Label x:Name="usernameLabel" Margin="4,1,48,147" Content="Windows User logged in: " FontSize="14" FontStretch="SemiExpanded" FontWeight="Bold"/>
-        <Label x:Name="statusLabel" Margin="6,27,46,121" Content="Insert or Re-insert card in reader to begin" FontSize="14" FontStretch="SemiExpanded" FontStyle="Italic" FontWeight="Regular"/>
-        <Label x:Name="CardholderName" Content="" HorizontalAlignment="Center" Height="34" VerticalAlignment="Center" Width="336" FontSize="20"/>
+        <Label x:Name="usernameLabel" Margin="4,5,374,0" Content="Windows User logged in: " FontStretch="ExtraCondensed" VerticalAlignment="Top" BorderThickness="2,2,2,2" Height="33" FontWeight="Bold">
+            <Label.BorderBrush>
+                <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                    <GradientStop Color="#FF09283C"/>
+                    <GradientStop Color="#FF7C9CB1" Offset="1"/>
+                </LinearGradientBrush>
+            </Label.BorderBrush>
+            <Label.Background>
+                <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                    <GradientStop Color="White" Offset="1"/>
+                    <GradientStop Color="#FFB2D7EF" Offset="0"/>
+                    <GradientStop Color="#FF8AA6B7" Offset="0"/>
+                </LinearGradientBrush>
+            </Label.Background>
+        </Label>
         <Image x:Name="CardType" Height="66" Margin="22,84,0,0" VerticalAlignment="Top" HorizontalAlignment="Left" Width="103" Stretch="UniformToFill" RenderOptions.BitmapScalingMode="HighQuality">
             <Image.Effect>
                 <DropShadowEffect ShadowDepth="1" Direction="250" BlurRadius="2" Opacity="0.7" Color="Black"/>
             </Image.Effect>
         </Image>
-        <Label x:Name="Expiry" Content="" HorizontalAlignment="Left" Height="34" Margin="174,145,0,0" VerticalAlignment="Top" Width="248" FontSize="20"/>
+        <Label x:Name="Expiry" Content="" HorizontalAlignment="Left" Height="34" Margin="180,149,0,0" VerticalAlignment="Top" Width="248" FontSize="20"/>
 
         <!-- Collapsed TreeView -->
         <TreeView Grid.Row="1" 
@@ -72,7 +98,49 @@
                 </HierarchicalDataTemplate>
             </TreeView.ItemTemplate>
         </TreeView>
-        <Button x:Name="button" Content="Generate Report" Margin="496,0,0,10" Grid.Row="1" HorizontalAlignment="Left" Width="131" Height="36" VerticalAlignment="Bottom" Click="GenerateReport_Click"/>
-        <Label x:Name="PAN" Content="" HorizontalAlignment="Left" Height="35" VerticalAlignment="Top" Width="248" Margin="174,110,0,0" FontSize="20"/>
+        <Button x:Name="button" Content="Generate Report" Margin="535,0,0,10" Grid.Row="1" HorizontalAlignment="Left" Width="131" Height="36" VerticalAlignment="Bottom" Click="GenerateReport_Click"/>
+        <Label x:Name="PAN" Content="" HorizontalAlignment="Left" Height="35" VerticalAlignment="Top" Width="248" Margin="181,110,0,0" FontSize="20"/>
+        <Label x:Name="label" Content="Cardholder Name" HorizontalAlignment="Left" Height="29" Margin="179,54,0,0" VerticalAlignment="Top" Width="117"/>
+        <Label x:Name="label_Copy" Content="Card Number" HorizontalAlignment="Left" Height="28" Margin="178,94,0,0" VerticalAlignment="Top" Width="118"/>
+        <Label x:Name="label_Copy1" Content="Expiry" HorizontalAlignment="Left" Height="28" Margin="180,136,0,0" VerticalAlignment="Top" Width="118"/>
+        <Label x:Name="CardholderName" Content="" HorizontalAlignment="Left" Height="32" VerticalAlignment="Top" Width="336" FontSize="20" Margin="183,68,0,0"/>
+        <Label x:Name="statusLabel" 
+               Margin="0,5,7,0" 
+               Content="Insert or Re-insert card in reader to begin" 
+               FontStyle="Italic" 
+               VerticalAlignment="Top" 
+               BorderThickness="2,2,2,2" 
+               Height="33" 
+               HorizontalAlignment="Right" 
+               Width="367" 
+               FontStretch="ExtraCondensed" 
+               FontWeight="Bold">
+            <Label.Template>
+                <ControlTemplate TargetType="Label">
+                    <Border Background="{TemplateBinding Background}" 
+                            BorderBrush="{TemplateBinding BorderBrush}" 
+                            BorderThickness="{TemplateBinding BorderThickness}">
+                        <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+                    </Border>
+                </ControlTemplate>
+            </Label.Template>
+            <Label.BorderBrush>
+                <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                    <GradientStop Color="#FF09283C"/>
+                    <GradientStop Color="#FF7C9CB1" Offset="0.997"/>
+                </LinearGradientBrush>
+            </Label.BorderBrush>
+            <Label.Background>
+                <LinearGradientBrush EndPoint="0.5,1" StartPoint="0.5,0">
+                    <GradientStop Color="#FFFFF722" Offset="1"/>
+                    <GradientStop Color="#FF8AA6B7" Offset="0"/>
+                    <GradientStop Color="#FFB4C169" Offset="0.356"/>
+                </LinearGradientBrush>
+            </Label.Background>
+        </Label>
+
+        <Label x:Name="Reccounter" Content="" HorizontalAlignment="Right" Height="33" Margin="0,165,-38,0" Grid.RowSpan="2" VerticalAlignment="Top" Width="126"/>
+        <Button x:Name="ConnectReader" Content="Attempt Connect and Read" Click="OnConnectCard" Height="29" Margin="512,54,12,0" VerticalAlignment="Top"/>
+        <Label x:Name="Reccounter_Copy" Content="# Cards Read" HorizontalAlignment="Right" Height="33" Margin="0,165,44,0" Grid.RowSpan="2" VerticalAlignment="Top" Width="126"/>
     </Grid>
 </Window>

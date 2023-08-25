@@ -51,7 +51,7 @@ namespace EMV_Card_Browser
 
 
         private CardRecord tempRecord = new CardRecord();
-        private void PcscReader_CardInserted(string reader, byte[] atr)
+        public void PcscReader_CardInserted(string reader, byte[] atr)
 
         {
             _statusLabel.Dispatcher.Invoke(() =>
@@ -106,59 +106,11 @@ namespace EMV_Card_Browser
                 {
                     _statusLabel.Content = "Card reading error.";
                 });
+                _pcscReader.Dispose();
             }
+
         }
 
-        //private void PcscReader_CardInserted(string reader, byte[] atr)
-        //{
-        //    _statusLabel.Dispatcher.Invoke(() =>
-        //    {
-        //        _statusLabel.Content = "Card inserted.";
-        //    });
-
-        //    // Maximum attempts to read the card.
-        //    int maxAttempts = 3;
-        //    bool isReadSuccessful = false;
-
-        //    for (int attempt = 1; attempt <= maxAttempts; attempt++)
-        //    {
-        //        try
-        //        {
-        //            _statusLabel.Dispatcher.Invoke(() =>
-        //            {
-        //                _statusLabel.Content = $"Card reading attempt {attempt} in progress...";
-        //            });
-
-        //            _readCardAction();
-
-        //            _statusLabel.Dispatcher.Invoke(() =>
-        //            {
-        //                _statusLabel.Content = "Card reading finished.";
-
-        //            });
-
-        //            isReadSuccessful = true;
-        //            break; // Exit the loop if reading is successful.
-        //        }
-        //        catch
-        //        {
-        //            if (attempt < maxAttempts)
-        //            {
-        //                // If it's not the last attempt, wait for 1 second before retrying.
-        //                System.Threading.Thread.Sleep(2000);
-        //                continue;
-        //            }
-        //        }
-        //    }
-
-        //    if (!isReadSuccessful)
-        //    {
-        //        _statusLabel.Dispatcher.Invoke(() =>
-        //        {
-        //            _statusLabel.Content = "Card reading error.";
-        //        });
-        //    }
-        //}
 
 
         private void PcscReader_CardRemoved(string reader)

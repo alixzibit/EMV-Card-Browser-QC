@@ -6,7 +6,7 @@
     <RootNamespace>EMV_Card_Browser</RootNamespace>
     <Nullable>enable</Nullable>
     <UseWPF>true</UseWPF>
-    <ApplicationIcon>emvcardico2.ico</ApplicationIcon>
+    <ApplicationIcon>emvico3.ico</ApplicationIcon>
     <Company>OMA Emirates</Company>
     <Product>EMV Card Reader QC</Product>
     <Description>EMV Card Reader QC verifies existense of personalized data in EMV cards</Description>
@@ -16,22 +16,13 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <None Remove="emvcardico2.png" />
+    <None Remove="emvico3.ico" />
     <None Remove="mastercard.png" />
     <None Remove="visa.png" />
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="emvcardico2.ico">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Resource>
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="bin\Debug\net6.0-windows\emvqc.PNG">
-      <Pack>True</Pack>
-      <PackagePath>\</PackagePath>
-    </None>
+    <Content Include="emvico3.ico" />
   </ItemGroup>
 
   <ItemGroup>
@@ -43,7 +34,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Resource Include="emvcardico2.png">
+    <Resource Include="emvico3.ico">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
     <Resource Include="mastercard.png">
@@ -52,6 +43,10 @@
     <Resource Include="visa.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="bin\Debug\net6.0-windows\" />
   </ItemGroup>
 
 </Project>

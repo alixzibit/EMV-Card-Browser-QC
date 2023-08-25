@@ -27,6 +27,10 @@ using System.Windows.Markup;
 using System.Windows.Media.Imaging;
 using System.Security.Principal;
 using System.Windows.Input;
+using PdfSharp.Pdf.Content;
+using System.Reflection.PortableExecutable;
+using System.Threading.Tasks;
+using System.Windows.Automation;
 
 
 namespace EMV_Card_Browser
@@ -40,6 +44,10 @@ namespace EMV_Card_Browser
         private Asn1NodeViewModel rootNode;
         private CardEventListener _cardEventListener;
         private CardDataViewModel viewModel = new CardDataViewModel();
+        private PCSCReader connectReader;
+        private string _selectedReaderName;
+        private int exceptionCounter = 0;
+        public bool IsValidCardRead = false;
 
 
         public MainWindow()
@@ -60,8 +68,10 @@ namespace EMV_Card_Browser
 
             // Now, you just have to subscribe to the event of the _cardEventListener
             _cardEventListener.CardReadFinished += CheckAndAddToDataGrid;
+            
             string currentUsername = WindowsIdentity.GetCurrent().Name.Split('\\').Last();
             usernameLabel.Content = "Windows User: " + currentUsername;
+            this.Closing += MainWindow_Closing;
         }
 
         //public MainWindow()
@@ -78,6 +88,13 @@ namespace EMV_Card_Browser
         //    cardEventListener.CardReadFinished += CheckAndAddToDataGrid;
 
         //}
+
+        private void Reader_CardNotPresent(object sender, EventArgs e)
+        {
+            statusLabel.Content = "Card not present.";
+            MessageBox.Show("Please insert a card into the reader.", "Card Missing", MessageBoxButton.OK, MessageBoxImage.Warning);
+        }
+       
         private bool isCardInfoBeingUpdated = false;
 
         private void ViewModel_PropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -94,20 +111,83 @@ namespace EMV_Card_Browser
                 }
             }
         }
-        //private void MainWindow_Closing(object sender, CancelEventArgs e)
-        //{
-        //    cardEventListener.CardReadFinished -= CheckAndAddToDataGrid;
-        //}
 
 
-        //private void ViewModel_PropertyChanged(object sender, PropertyChangedEventArgs e)
+
+        private async void OnConnectCard(object sender, RoutedEventArgs e) // make the method async
+        {
+            connectReader = new PCSCReader();
+
+            var readers = connectReader.Readers;
+            if (readers.Count() == 0)
+            {
+                statusLabel.Content = "No reader detected. Please attach card reader and connect.";
+                return;
+            }
+
+            // Automatically select the first reader
+            _selectedReaderName = readers.First();
+            statusLabel.Content = "Reader Connected";
+            connectReader.CardNotPresent += Reader_CardNotPresent;
+
+            // Initial check for card presence
+            if (!connectReader.IsCardPresent())
+            {
+                // Wait for a short delay
+                await Task.Delay(500); // 500 milliseconds (0.5 seconds)
+
+                // Re-check for card presence
+                if (!connectReader.IsCardPresent())
+                {
+                    statusLabel.Content = "Reader Connected, but no card detected. Please insert a card.";
+                    Mouse.OverrideCursor = null;
+                    return;
+                }
+            }
+
+            // If you've reached here, a card is present. 
+            ReadCard();
+            CheckAndAddToDataGrid();
+            Mouse.OverrideCursor = null;
+        }
+
+
+
+        //private void OnConnectCard(object sender, RoutedEventArgs e)
         //{
-        //    // Check if any of the desired properties have changed
-        //    if (e.PropertyName == "CardholderName" || e.PropertyName == "CardType"
-        //                                           || e.PropertyName == "PAN" || e.PropertyName == "Expiry")
+        //    DisconnectCard();
+        //    // Check if the existing reader instance is not null, and if so, dispose of it
+        //    if (connectReader != null)
         //    {
-        //        AddToDataGrid();
+        //        connectReader.Dispose();
+        //        connectReader = null; // Optional but it's good to nullify it after disposing
         //    }
+
+        //    connectReader = new PCSCReader();
+
+        //    var readers = connectReader.Readers;
+        //    if (readers.Count() == 0)
+        //    {
+        //        statusLabel.Content = "No reader detected. Please attach card reader and connect.";
+        //        return;
+        //    }
+
+        //    // Automatically select the first reader
+        //    _selectedReaderName = readers.First();
+
+        //    // Check if a card is present before proceeding
+        //    if (!connectReader.IsCardPresent())
+        //    {
+
+        //        statusLabel.Content = "Reader Connected, but no card detected. Please insert a card.";
+
+        //        return;
+        //    }
+
+        //    statusLabel.Content = "Reader Connected, reading card...";
+        //    ReadCard();
+        //    CheckAndAddToDataGrid();
+
         //}
 
         private void AddToDataGrid()
@@ -134,6 +214,7 @@ namespace EMV_Card_Browser
             if (existingRecord == null)
             {
                 viewModel.CardRecords.Add(newRecord);
+
             }
         }
 
@@ -259,7 +340,7 @@ namespace EMV_Card_Browser
             return success;
         }
 
-
+        //public bool IsValidCardRead;
         internal void ReadCard()
         {
           
@@ -284,7 +365,9 @@ namespace EMV_Card_Browser
 
                 if (!ConnectToCard(readerName))
                 {
-                    MessageBox.Show("Failed to connect to the card reader.");
+                    MessageBox.Show("Failed to connect to the card.");
+                    statusLabel.Content = "Please insert card";
+
                     return;
                 }
                 try
@@ -325,31 +408,12 @@ namespace EMV_Card_Browser
 
                         if (response == null)
                         {
+                            IsValidCardRead = false;
                             statusLabel.Content = "Card not personalized or Failed to select a known AID";
                             MessageBox.Show("Card not personalized or Failed to select a known AID.");
                             return;
                         }
 
-                        //ApplicationSelection appSelection = new ApplicationSelection(_cardReader);
-                        //response = appSelection.SelectApplication(aidSelectionResult.AID);
-                        //// Check if the response is successful and contains ASN.1 data.
-                        //if (response.SW1 == 0x90 && response.Data != null && response.Data.Length > 0)
-                        //{
-                        //    ASN1 asn1Response = new ASN1(response.Data);
-                        //    AddRecordNodes(asn1Response, rootNode);
-                        //}
-                        //else
-                        //{
-                        //    AddResponseNodes(response, rootNode);  // This will add nodes only if there's any non-status data.
-                        //}
-                        //logger.WriteLog($"Application Selection response: SW1 = {response.SW1}, SW2 = {response.SW2}");
-
-                        //if (!appSelection.IsSelectionSuccessful(response))
-                        //{
-                        //    statusLabel.Content = "Failed to select the application by AID";
-                        //    //MessageBox.Show("Failed to select the application by AID.");
-                        //    //return;
-                        //}
                     }
 
                     ProcessingOptions processingOptions = new ProcessingOptions(_cardReader);
@@ -369,6 +433,7 @@ namespace EMV_Card_Browser
 
                     if (!processingOptions.IsGPOResponseSuccessful(response))
                     {
+                        IsValidCardRead = false;
                         MessageBox.Show("Failed to get processing options.");
                         return;
                     }
@@ -380,6 +445,7 @@ namespace EMV_Card_Browser
 
                     if (records.Count == 0)
                     {
+                        IsValidCardRead = false;
                         MessageBox.Show("No records retrieved.");
                         return;
                     }
@@ -390,22 +456,38 @@ namespace EMV_Card_Browser
 
                     }
                     Mouse.OverrideCursor = null;
+                    IsValidCardRead = true;
                 }
 
                 catch (Exception ex)
                 {
+                    IsValidCardRead = false;
+                    exceptionCounter++;
                     logger.WriteLog($"CARD READ ERROR: {ex.Message}");
+                    Mouse.OverrideCursor = null;
 
-                    // Prompt the user to retry
-                    MessageBoxResult result = MessageBox.Show("Card reading error occurred. Would you like to retry?", "Error", MessageBoxButton.YesNo, MessageBoxImage.Error);
-
-                    if (result == MessageBoxResult.Yes)
+                    if (exceptionCounter <= 2)  // Adjust the threshold as necessary
                     {
-                        ReadCard();
+                       
+                        // Prompt the user to retry
+                        MessageBoxResult result = MessageBox.Show("Card reading error occurred. Would you like to retry?", "Error", MessageBoxButton.YesNo, MessageBoxImage.Error);
+                        
+                        if (result == MessageBoxResult.Yes)
+                        {
+                            ReadCard();
+                        }
+                        else
+                        {
+                            statusLabel.Content = "Card reading error";
+                        }
                     }
                     else
                     {
+                        MessageBox.Show(
+                            "If you are trying to read the same card and the error persists, then the card has NO or INCOMPLETE data. Please insert a personalized card.", "Persistent Error", MessageBoxButton.OK, MessageBoxImage.Warning);
                         statusLabel.Content = "Card reading error";
+                        exceptionCounter = 0; // Reset the counter after showing the persistent error message
+                        return;
                     }
                 }
 
@@ -552,6 +634,8 @@ namespace EMV_Card_Browser
 
             parentNode.Children.Add(node);
         }
+        private int _recordCount = 0;
+
         private void CheckAndAddToDataGrid()
         {
             var logger = new Logger();
@@ -568,25 +652,41 @@ namespace EMV_Card_Browser
                     record.CardNumber == tempRecord.CardNumber &&
                     record.ExpiryDate == tempRecord.ExpiryDate &&
                     record.CardholderName == tempRecord.CardholderName
-
                 );
-                if (existingRecord != null)
+                if (IsValidCardRead)
                 {
-                    logger.WriteLog($"Found existing record: {existingRecord.CardNumber}, {existingRecord.ExpiryDate}, {existingRecord.CardholderName}");
-                }
-                if (existingRecord == null)
-                {
-                    tempRecord.CardType = DeduceCardTypeFromPAN(tempRecord.CardNumber);
-                    //tempRecord.Timestamp = Convert.ToDateTime(DateTime.Now.ToString("dd/MM/yyyy HH:mm:ss"));
-                    tempRecord.Timestamp = DateTime.Now;
+                    if (existingRecord != null)
+                    {
+                        logger.WriteLog(
+                            $"Found existing record: {existingRecord.CardNumber}, {existingRecord.ExpiryDate}, {existingRecord.CardholderName}");
 
+                        // Notify user about the duplicate record
+                        MessageBox.Show(
+                            "The card data read is already present in the table. If you are certain that you have inserted a different card, then you have a DUPLICATE card.",
+                            "Duplicate Card Detected", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    }
+                    else
+                    {
+                        tempRecord.CardType = DeduceCardTypeFromPAN(tempRecord.CardNumber);
+                        tempRecord.Timestamp = DateTime.Now;
 
-                    viewModel.CardRecords.Add(tempRecord);
-                    logger = new Logger();
-                    logger.WriteLog($"Card data grid records: {tempRecord.CardNumber}, {tempRecord.ExpiryDate}, {tempRecord.CardholderName}, {tempRecord.Timestamp}");
+                        // Increment the record count and set the Srno for tempRecord.
+                        _recordCount++;
+                        tempRecord.Srno = _recordCount.ToString();
+
+                        viewModel.CardRecords.Add(tempRecord);
+                        logger.WriteLog(
+                            $"Card data grid records: {tempRecord.CardNumber}, {tempRecord.ExpiryDate}, {tempRecord.CardholderName}, {tempRecord.Timestamp}");
+
+                        // Update the reccounter label with the current record count.
+                        Reccounter.Content = $"{_recordCount}";
+                        exceptionCounter = 0;
+                        statusLabel.Content = "Card read successfully";
+                    }
                 }
             }
         }
+
 
         private CardRecord tempRecord = new CardRecord();
         private void UpdateCardholderNameUI()
@@ -717,15 +817,42 @@ namespace EMV_Card_Browser
 
         }
 
-        private void GenerateReport_Click(object sender, RoutedEventArgs e)
+        //private void GenerateReport_Click(object sender, RoutedEventArgs e)
+        //{
+        //    // Assuming you have a collection named CardRecords in your ViewModel
+        //    var generator = new ReportGenerator("Cards Chip QC Report", usernameLabel.Content.ToString(), Reccounter.Content.ToString(), viewModel.CardRecords);
+
+        //    string filename = generator.GenerateReport();
+
+        //    // Automatically open the generated PDF
+        //    //System.Diagnostics.Process.Start(filename);
+        //    string fullPath = System.IO.Path.Combine(Environment.CurrentDirectory, "CardsQCReport.pdf");
+        //    var psi = new ProcessStartInfo
+        //    {
+        //        FileName = fullPath,
+        //        UseShellExecute = true
+        //    };
+        //    Process.Start(psi);
+
+        //    //string fullPath = System.IO.Path.Combine(Environment.CurrentDirectory, "CardsQCReport.pdf");
+        //    //Process.Start(fullPath);
+        //}
+
+        private void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
-            // Assuming you have a collection named CardRecords in your ViewModel
-            var generator = new ReportGenerator("Cards Chip QC Report", usernameLabel.Content.ToString(), viewModel.CardRecords);
+            if (int.TryParse(Reccounter.Content.ToString(), out int recordCount) && recordCount > 0)
+            {
+                GenerateReport();
+            }
+        }
+
+        private void GenerateReport()
+        {
+            var generator = new ReportGenerator("Cards Chip QC Report", usernameLabel.Content.ToString(), Reccounter.Content.ToString(), viewModel.CardRecords);
 
             string filename = generator.GenerateReport();
 
             // Automatically open the generated PDF
-            //System.Diagnostics.Process.Start(filename);
             string fullPath = System.IO.Path.Combine(Environment.CurrentDirectory, "CardsQCReport.pdf");
             var psi = new ProcessStartInfo
             {
@@ -733,9 +860,38 @@ namespace EMV_Card_Browser
                 UseShellExecute = true
             };
             Process.Start(psi);
-
-            //string fullPath = System.IO.Path.Combine(Environment.CurrentDirectory, "CardsQCReport.pdf");
-            //Process.Start(fullPath);
         }
+
+        //private void GenerateReport_Click(object sender, RoutedEventArgs e)
+        //{
+        //    GenerateReport();
+        //}
+
+
+        private void GenerateReport_Click(object sender, RoutedEventArgs e)
+        {
+            // Ensure that Reccounter has a value and that it's positive
+            if (int.TryParse(Reccounter.Content.ToString(), out int recordCount) && recordCount > 0)
+            {
+                // Assuming you have a collection named CardRecords in your ViewModel
+                var generator = new ReportGenerator("Cards Chip QC Report", usernameLabel.Content.ToString(), Reccounter.Content.ToString(), viewModel.CardRecords);
+
+                string filename = generator.GenerateReport();
+
+                // Automatically open the generated PDF
+                string fullPath = System.IO.Path.Combine(Environment.CurrentDirectory, "CardsQCReport.pdf");
+                var psi = new ProcessStartInfo
+                {
+                    FileName = fullPath,
+                    UseShellExecute = true
+                };
+                Process.Start(psi);
+            }
+            else
+            {
+                MessageBox.Show("No data found in table. Please read some cards to generate report.", "Error", MessageBoxButton.OK, MessageBoxImage.Warning);
+            }
+        }
+
     }
 }

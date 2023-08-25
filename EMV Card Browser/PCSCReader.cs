@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.Text;
 using System.Diagnostics;
 using System.ComponentModel;
+using System.Windows.Controls;
 using System.Runtime.InteropServices;
 using System.IO;
+using System.Windows;
 
 namespace EMV_Card_Browser
 {
@@ -28,7 +30,10 @@ namespace EMV_Card_Browser
 
         public event CardInsertedEventHandler CardInserted = null;
         public event CardRemovedEventHandler CardRemoved = null;
-        
+        public delegate void CardNotPresentEventHandler(object sender, EventArgs e);
+        public event CardNotPresentEventHandler CardNotPresent;
+
+
         public PCSCReader()
         {
             int result = 0;
@@ -70,22 +75,77 @@ namespace EMV_Card_Browser
             }
         }
 
+        public bool IsCardPresent()
+        {
+            // Ensure we have reader states
+            if (readerStates == null || readerStates.Length == 0) return false;
+
+            // Check the first reader's state, assuming you're interested in only one reader
+            if ((readerStates[0].dwEventState & (int)WinSCard.CardState.Present) == (int)WinSCard.CardState.Present)
+            {
+                return true;
+            }
+
+            return false;
+            
+        }
+
+        //public bool Connect(string reader)
+        //{
+        //    int result = WinSCard.SCardConnect(context, reader, WinSCard.ShareMode.SCARD_SHARE_SHARED, WinSCard.Protocol.SCARD_PROTOCOL_T0 | WinSCard.Protocol.SCARD_PROTOCOL_T1, ref card, ref activeProtocol);
+
+        //    if (result != WinSCard.SCARD_S_SUCCESS)
+        //    {
+        //        throw new PCSCException(result);
+
+        //    }
+        //    else
+        //    {
+        //        isConnected = true;
+        //        atr = GetAnswerToReset();
+        //    }
+
+        //    return isConnected;
+        //}
+
         public bool Connect(string reader)
         {
-            int result = WinSCard.SCardConnect(context, reader, WinSCard.ShareMode.SCARD_SHARE_SHARED, WinSCard.Protocol.SCARD_PROTOCOL_T0 | WinSCard.Protocol.SCARD_PROTOCOL_T1, ref card, ref activeProtocol);
+            try
+            {
+                int result = WinSCard.SCardConnect(context, reader, WinSCard.ShareMode.SCARD_SHARE_SHARED, WinSCard.Protocol.SCARD_PROTOCOL_T0 | WinSCard.Protocol.SCARD_PROTOCOL_T1, ref card, ref activeProtocol);
 
-            if (result != WinSCard.SCARD_S_SUCCESS)
-            {
-                throw new PCSCException(result);
+                if (result != WinSCard.SCARD_S_SUCCESS)
+                {
+                    throw new PCSCException(result);
+                }
+                else
+                {
+                    isConnected = true;
+                    atr = GetAnswerToReset();
+                }
             }
-            else
+            catch (PCSCException ex)
             {
-                isConnected = true;
-                atr = GetAnswerToReset();
+                if (ex.Message.Contains("The smart card has been removed"))
+                {
+
+                    MessageBox.Show("Please insert a card into the reader.", "Card Missing", MessageBoxButton.OK, MessageBoxImage.Warning);
+
+                }
+                else
+                {
+                    // Handle other exceptions or simply relay the message
+                    MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                }
+
+                isConnected = false;
             }
 
             return isConnected;
         }
+
+
+
 
         public bool Disconnect()
         {

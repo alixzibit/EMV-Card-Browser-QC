@@ -1,5 +1,4 @@
-﻿using EMV_Card_Browser;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace EMV_Card_Browser
 {

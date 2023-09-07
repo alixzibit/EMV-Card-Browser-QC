@@ -1,11 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Diagnostics;
 using System.ComponentModel;
-using System.Windows.Controls;
-using System.Runtime.InteropServices;
-using System.IO;
+using System.Diagnostics;
+using System.Text;
 using System.Windows;
 
 namespace EMV_Card_Browser
@@ -24,7 +21,7 @@ namespace EMV_Card_Browser
 
         // Debug
         private bool outputDebugString = true;
-        
+
         public delegate void CardInsertedEventHandler(string reader, byte[] atr);
         public delegate void CardRemovedEventHandler(string reader);
 
@@ -48,7 +45,7 @@ namespace EMV_Card_Browser
             byte[] readers = null;
             uint readerCount = 0;
             result = WinSCard.SCardListReaders(context, null, readers, ref readerCount);
-            
+
             readers = new byte[readerCount];
             result = WinSCard.SCardListReaders(context, null, readers, ref readerCount);
             availableReaders = new MultiString(readers);
@@ -87,7 +84,7 @@ namespace EMV_Card_Browser
             }
 
             return false;
-            
+
         }
 
         //public bool Connect(string reader)
@@ -268,7 +265,7 @@ namespace EMV_Card_Browser
 #endif
             #endregion
 
-            int result = WinSCard.SCardTransmit(card, sendPci, apdu.ToArray(), apdu.ToArray().Length, IntPtr.Zero, recvBuffer, ref recvLength);           
+            int result = WinSCard.SCardTransmit(card, sendPci, apdu.ToArray(), apdu.ToArray().Length, IntPtr.Zero, recvBuffer, ref recvLength);
 
             if (result != WinSCard.SCARD_S_SUCCESS)
             {
@@ -361,7 +358,7 @@ namespace EMV_Card_Browser
         {
             monitorThread.CancelAsync();
             monitorThread.Dispose();
-            
+
             int result = WinSCard.SCardReleaseContext(context);
 
             if (result != WinSCard.SCARD_S_SUCCESS)

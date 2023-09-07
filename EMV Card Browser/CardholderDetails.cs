@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Windows.Media.Imaging;
 using System.Text;  // for Encoding
 
 namespace EMV_Card_Browser

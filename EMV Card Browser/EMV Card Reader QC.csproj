@@ -18,16 +18,17 @@
   <ItemGroup>
     <None Remove="emvico3.ico" />
     <None Remove="mastercard.png" />
+    <None Remove="reporticon1.ico" />
     <None Remove="visa.png" />
   </ItemGroup>
 
   <ItemGroup>
-    <Content Include="emvico3.ico" />
+    <Content Include="emvico3.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
   <ItemGroup>
-    <PackageReference Include="PCSC" Version="6.1.3" />
-    <PackageReference Include="PCSC.Iso7816" Version="6.1.3" />
     <PackageReference Include="PdfSharp" Version="1.50.5147" />
     <PackageReference Include="System.Drawing.Common" Version="7.0.0" />
     <PackageReference Include="System.Text.Encoding.CodePages" Version="7.0.0" />
@@ -40,6 +41,9 @@
     <Resource Include="mastercard.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>
+    <Content Include="reporticon1.ico">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Resource Include="visa.png">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Resource>

@@ -1,8 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace EMV_Card_Browser
 {
@@ -18,4 +14,3 @@ namespace EMV_Card_Browser
     }
 }
 
-    

@@ -1,11 +1,7 @@
-﻿using System.Windows.Controls;
-using EMV_Card_Browser;
-using System.Text;
+﻿using System;
 using System.Collections.ObjectModel;
-using System.IO;
 using System.Linq;
-using System;
-using System.Windows.Input;
+using System.Windows.Controls;
 
 namespace EMV_Card_Browser
 {
@@ -71,7 +67,7 @@ namespace EMV_Card_Browser
                     {
                         _statusLabel.Content = $"Card reading attempt {attempt} in progress...";
                     });
-                    
+
                     _readCardAction();
 
                     _statusLabel.Dispatcher.Invoke(() =>

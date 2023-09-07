@@ -1,7 +1,6 @@
-﻿using System;
+﻿using System.Collections;
 using System.Collections.Generic;
 using System.Text;
-using System.Collections;
 
 namespace EMV_Card_Browser
 {
@@ -27,28 +26,28 @@ namespace EMV_Card_Browser
 
         public string[] ToArray()
         {
-            List<string> stringList = new List<string>(); 
-            int i = 0; 
-            
+            List<string> stringList = new List<string>();
+            int i = 0;
+
             while (i < multiString.Length)
-            { 
-                int j = i; 
-                
-                if (multiString[j++] == '\0') 
-                    break; 
-                
-                while (j < multiString.Length) 
-                { 
-                    if (multiString[j++] == '\0') 
-                    { 
-                        stringList.Add(new string(multiString, i, j - i - 1)); 
-                        i = j; 
-                        break; 
-                    } 
-                } 
-            } 
-            
-            return stringList.ToArray(); 
+            {
+                int j = i;
+
+                if (multiString[j++] == '\0')
+                    break;
+
+                while (j < multiString.Length)
+                {
+                    if (multiString[j++] == '\0')
+                    {
+                        stringList.Add(new string(multiString, i, j - i - 1));
+                        i = j;
+                        break;
+                    }
+                }
+            }
+
+            return stringList.ToArray();
         }
 
         public override string ToString()

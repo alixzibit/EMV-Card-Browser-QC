@@ -1,8 +1,6 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Runtime.InteropServices;
 using System.ComponentModel;
+using System.Runtime.InteropServices;
 
 namespace EMV_Card_Browser
 {
@@ -110,7 +108,7 @@ namespace EMV_Card_Browser
         internal static extern int SCardTransmit(IntPtr card, IntPtr sendPci, byte[] sendBuffer, int sendLength, IntPtr recvPci, byte[] recvBuffer, ref int recvLength);
         [DllImport("Winscard.dll", CharSet = CharSet.Unicode)]
         internal static extern int SCardGetStatusChange(IntPtr context, int timeout, [In, Out] SCARD_READERSTATE[] readerStates, int numReaders);
-        
+
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode)]
         internal extern static IntPtr LoadLibrary(string libraryName);
         [DllImport("kernel32.dll")]

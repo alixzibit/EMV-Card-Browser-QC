@@ -1,36 +1,15 @@
 ﻿using System;
-using System.Linq;
-using System.Windows;
-using PCSC;
-using System.Windows;
-using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Diagnostics;
-using System.ComponentModel;
-using System.Runtime.InteropServices;
-using System.IO;
-using System.Globalization;
-using System.IO;
-using System.Linq;
-using System.Reflection;
-using System.Runtime.InteropServices;
-using System.Text;
-using System.Threading;
-using System.Xml;
-using System.Xml.Linq;
-using System.Xml.XPath;
-using System.Diagnostics;
 using System.Collections.ObjectModel;
-using System.Windows.Controls;
-using System.Windows.Markup;
-using System.Windows.Media.Imaging;
+using System.ComponentModel;
+using System.Diagnostics;
+using System.Linq;
 using System.Security.Principal;
-using System.Windows.Input;
-using PdfSharp.Pdf.Content;
-using System.Reflection.PortableExecutable;
+using System.Text;
 using System.Threading.Tasks;
-using System.Windows.Automation;
+using System.Windows;
+using System.Windows.Input;
+using System.Windows.Media.Imaging;
 
 
 namespace EMV_Card_Browser
@@ -68,33 +47,18 @@ namespace EMV_Card_Browser
 
             // Now, you just have to subscribe to the event of the _cardEventListener
             _cardEventListener.CardReadFinished += CheckAndAddToDataGrid;
-            
+
             string currentUsername = WindowsIdentity.GetCurrent().Name.Split('\\').Last();
             usernameLabel.Content = "Windows User: " + currentUsername;
             this.Closing += MainWindow_Closing;
         }
-
-        //public MainWindow()
-        //{
-        //    InitializeComponent();
-        //    DataContext = viewModel;
-        //    viewModel.PropertyChanged += ViewModel_PropertyChanged;
-        //    Initialize rootNode
-        //    rootNode = new Asn1NodeViewModel("Root");
-        //    Bind CardDataTree.ItemsSource to rootNode.Children
-        //    CardDataTree.ItemsSource = rootNode.Children;
-        //    _cardEventListener = new CardEventListener(ReadCard, statusLabel, rootNode.Children);
-        //    CardEventListener cardEventListener = new CardEventListener();
-        //    cardEventListener.CardReadFinished += CheckAndAddToDataGrid;
-
-        //}
 
         private void Reader_CardNotPresent(object sender, EventArgs e)
         {
             statusLabel.Content = "Card not present.";
             MessageBox.Show("Please insert a card into the reader.", "Card Missing", MessageBoxButton.OK, MessageBoxImage.Warning);
         }
-       
+
         private bool isCardInfoBeingUpdated = false;
 
         private void ViewModel_PropertyChanged(object sender, PropertyChangedEventArgs e)
@@ -152,44 +116,6 @@ namespace EMV_Card_Browser
         }
 
 
-
-        //private void OnConnectCard(object sender, RoutedEventArgs e)
-        //{
-        //    DisconnectCard();
-        //    // Check if the existing reader instance is not null, and if so, dispose of it
-        //    if (connectReader != null)
-        //    {
-        //        connectReader.Dispose();
-        //        connectReader = null; // Optional but it's good to nullify it after disposing
-        //    }
-
-        //    connectReader = new PCSCReader();
-
-        //    var readers = connectReader.Readers;
-        //    if (readers.Count() == 0)
-        //    {
-        //        statusLabel.Content = "No reader detected. Please attach card reader and connect.";
-        //        return;
-        //    }
-
-        //    // Automatically select the first reader
-        //    _selectedReaderName = readers.First();
-
-        //    // Check if a card is present before proceeding
-        //    if (!connectReader.IsCardPresent())
-        //    {
-
-        //        statusLabel.Content = "Reader Connected, but no card detected. Please insert a card.";
-
-        //        return;
-        //    }
-
-        //    statusLabel.Content = "Reader Connected, reading card...";
-        //    ReadCard();
-        //    CheckAndAddToDataGrid();
-
-        //}
-
         private void AddToDataGrid()
         {
             string cardType = DeduceCardTypeFromPAN(viewModel.PAN);
@@ -218,23 +144,6 @@ namespace EMV_Card_Browser
             }
         }
 
-        //private void AddToDataGrid()
-        //{
-        //    string cardType = DeduceCardTypeFromPAN(viewModel.PAN);
-        //    // ... other code
-
-        //    CardRecord newRecord = new CardRecord
-        //    {
-        //        CardholderName = viewModel.CardholderName,
-        //        CardType = cardType,
-        //        CardNumber = viewModel.PAN,
-        //        ExpiryDate = viewModel.Expiry,
-        //        Timestamp = DateTime.Now
-        //    };
-
-        //    viewModel.CardRecords.Add(newRecord);
-
-        //}
         private string DeduceCardTypeFromPAN(string pan)
         {
             if (!string.IsNullOrEmpty(pan))
@@ -336,14 +245,14 @@ namespace EMV_Card_Browser
         {
             var logger = new Logger();
             bool success = _cardReader.Connect(readerName);
-           logger.WriteLog(success ? "Successfully connected to card reader." : "Failed to connect to card reader.");
+            logger.WriteLog(success ? "Successfully connected to card reader." : "Failed to connect to card reader.");
             return success;
         }
 
         //public bool IsValidCardRead;
         internal void ReadCard()
         {
-          
+
             // Use Dispatcher to ensure UI operations are executed on the main thread
             Dispatcher.Invoke(() =>
             {
@@ -373,11 +282,11 @@ namespace EMV_Card_Browser
                 try
                 {
                     byte[] pse = Encoding.ASCII.GetBytes("1PAY.SYS.DDF01");
-                   logger.WriteLog($"Sending APDU command to select the PSE: {BitConverter.ToString(pse)}");
+                    logger.WriteLog($"Sending APDU command to select the PSE: {BitConverter.ToString(pse)}");
 
                     APDUCommand apdu = new APDUCommand(0x00, 0xA4, 0x04, 0x00, pse, (byte)pse.Length);
                     APDUResponse response = _cardReader.Transmit(apdu);
-                   logger.WriteLog($"Received response: SW1 = {response.SW1}, SW2 = {response.SW2}");
+                    logger.WriteLog($"Received response: SW1 = {response.SW1}, SW2 = {response.SW2}");
                     // Check if the response is successful and contains ASN.1 data.
                     if (response.SW1 == 0x90 && response.Data != null && response.Data.Length > 0)
                     {
@@ -441,7 +350,7 @@ namespace EMV_Card_Browser
                     RecordReader recordReader = new RecordReader(_cardReader);
                     List<APDUResponse> records = recordReader.ReadAllRecords();
 
-                   logger.WriteLog($"Number of records retrieved: {records.Count}");
+                    logger.WriteLog($"Number of records retrieved: {records.Count}");
 
                     if (records.Count == 0)
                     {
@@ -468,10 +377,10 @@ namespace EMV_Card_Browser
 
                     if (exceptionCounter <= 2)  // Adjust the threshold as necessary
                     {
-                       
+
                         // Prompt the user to retry
                         MessageBoxResult result = MessageBox.Show("Card reading error occurred. Would you like to retry?", "Error", MessageBoxButton.YesNo, MessageBoxImage.Error);
-                        
+
                         if (result == MessageBoxResult.Yes)
                         {
                             ReadCard();
@@ -739,104 +648,12 @@ namespace EMV_Card_Browser
 
         private void CardDataTree_SelectedItemChanged(object sender, RoutedPropertyChangedEventArgs<Object> e)
         { }
-        //{
-        //    var selectedNode = (Asn1NodeViewModel)e.NewValue;
-        //    if (selectedNode != null)
-        //    {
-        //        byte[] asn1 = selectedNode.Value;  // Use the Value property
-        //        StringBuilder sb = new StringBuilder();
-
-        //        // Check if asn1 is not null before looping over its elements
-        //        if (asn1 != null)
-        //        {
-        //            try
-        //            {
-        //                foreach (byte b in asn1)
-        //                {
-        //                    sb.AppendFormat("{0:X2}", b);
-        //                }
-
-        //                lblTag.Content = sb.ToString();
-        //                lblLength.Content = asn1.Length.ToString();  // byte arrays have a Length property
-
-        //                sb.Clear();  // clear the StringBuilder for reuse
-
-        //                foreach (byte b in asn1)
-        //                {
-        //                    sb.AppendFormat("{0:X2}", b);
-        //                }
-
-        //                txtData.Text = sb.ToString();
-        //                lblDescription.Content = "Description not implemented";
-        //            }
-        //            catch (Exception ex)
-        //            {
-        //                // Display the exception in a message box
-        //                MessageBox.Show(ex.Message, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
-        //            }
-        //        }
-        //        else
-        //        {
-        //            // Handle the case where asn1 is null
-        //            // For example, you might want to log an error or display a message to the user
-        //            MessageBox.Show("The selected node does not contain any data.", "Warning", MessageBoxButton.OK, MessageBoxImage.Warning);
-        //        }
-        //    }
-        //    else
-        //    {
-        //        lblTag.Content = String.Empty;
-        //        lblLength.Content = String.Empty;
-        //        lblDescription.Content = String.Empty;
-        //        txtData.Text = String.Empty;
-        //    }
-        //}
-
-
-        // You need to handle the tag description. This could be a lookup in a dictionary or database.
-        // For simplicity, this
-
-        //private void PopulateTreeView(byte[] data)
-        //        {
-        //            // Create a new tree node
-        //            TreeNode node = new TreeNode();
-        //            node.Name = $"PSE Data: {BitConverter.ToString(data)}";
-
-        //            // For now, we'll leave the Children collection empty.
-        //            // In a real application, you would populate this with the child nodes.
-        //            node.Children = new ObservableCollection<TreeNode>();
-
-        //            // Add the node to the tree view
-        //            // Note that you'll need to bind the TreeView's ItemsSource property to a collection of TreeNode objects
-        //            _treeNodes.Add(node);
-        //        }
-
 
 
         private void ribbonTextBox_TextChanged(object sender, System.Windows.Controls.TextChangedEventArgs e)
         {
 
         }
-
-        //private void GenerateReport_Click(object sender, RoutedEventArgs e)
-        //{
-        //    // Assuming you have a collection named CardRecords in your ViewModel
-        //    var generator = new ReportGenerator("Cards Chip QC Report", usernameLabel.Content.ToString(), Reccounter.Content.ToString(), viewModel.CardRecords);
-
-        //    string filename = generator.GenerateReport();
-
-        //    // Automatically open the generated PDF
-        //    //System.Diagnostics.Process.Start(filename);
-        //    string fullPath = System.IO.Path.Combine(Environment.CurrentDirectory, "CardsQCReport.pdf");
-        //    var psi = new ProcessStartInfo
-        //    {
-        //        FileName = fullPath,
-        //        UseShellExecute = true
-        //    };
-        //    Process.Start(psi);
-
-        //    //string fullPath = System.IO.Path.Combine(Environment.CurrentDirectory, "CardsQCReport.pdf");
-        //    //Process.Start(fullPath);
-        //}
 
         private void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
@@ -853,7 +670,7 @@ namespace EMV_Card_Browser
             string filename = generator.GenerateReport();
 
             // Automatically open the generated PDF
-            string fullPath = System.IO.Path.Combine(Environment.CurrentDirectory, "CardsQCReport.pdf");
+            string fullPath = System.IO.Path.Combine(Environment.CurrentDirectory, filename);  // Use the filename returned by GenerateReport
             var psi = new ProcessStartInfo
             {
                 FileName = fullPath,
@@ -861,11 +678,6 @@ namespace EMV_Card_Browser
             };
             Process.Start(psi);
         }
-
-        //private void GenerateReport_Click(object sender, RoutedEventArgs e)
-        //{
-        //    GenerateReport();
-        //}
 
 
         private void GenerateReport_Click(object sender, RoutedEventArgs e)
@@ -879,7 +691,7 @@ namespace EMV_Card_Browser
                 string filename = generator.GenerateReport();
 
                 // Automatically open the generated PDF
-                string fullPath = System.IO.Path.Combine(Environment.CurrentDirectory, "CardsQCReport.pdf");
+                string fullPath = System.IO.Path.Combine(Environment.CurrentDirectory, filename);  // Use the filename returned by GenerateReport
                 var psi = new ProcessStartInfo
                 {
                     FileName = fullPath,
@@ -894,4 +706,5 @@ namespace EMV_Card_Browser
         }
 
     }
+
 }
